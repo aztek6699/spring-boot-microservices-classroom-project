@@ -10,10 +10,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @SpringBootApplication
 @EnableEurekaClient
-public class ClassServiceApplication {
+public class ClassroomServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(ClassServiceApplication.class, args);
+		SpringApplication.run(ClassroomServiceApplication.class, args);
 	}
 
 	@Bean
