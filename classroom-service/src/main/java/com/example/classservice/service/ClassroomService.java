@@ -8,11 +8,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,23 +20,22 @@ public class ClassroomService {
     private static Logger LOG = LoggerFactory.getLogger(ClassroomService.class);
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
-
-    @Autowired
     private ObjectMapper mapper;
 
-    private final ClassroomRepo repo;
+    @Autowired
+    private StudentService studentService;
 
-    @Value("${teacher.service.url}")
-    private String teacherBaseURL;
-    @Value("${student.service.url}")
-    private String studentBaseURL;
+    @Autowired
+    private TeacherService teacherService;
+
+    private final ClassroomRepo repo;
 
     @Autowired
     public ClassroomService(ClassroomRepo repo) {
         this.repo = repo;
     }
 
+    //@HystrixCommand(fallbackMethod = "getFallbackClassroom")
     public ResponseEntity<GenericResponse> getClassById(Long id) {
 
         Optional<Classroom> classroomOptional = repo.findById(id);
@@ -53,8 +49,8 @@ public class ClassroomService {
             if (classroom.getStudents() == null)
                 return ResponseEntity.ok(new GenericResponse(false, "classroom has no students", 400, null));
 
-            GenericResponse teacherResponse = getTeacher(classroom.getTeacher());
-            GenericResponse studentResponse = getStudents(classroom.getStudents());
+            GenericResponse teacherResponse = teacherService.getTeacher(classroom.getTeacher());
+            GenericResponse studentResponse = studentService.getStudents(classroom.getStudents());
 
             // check if teacher and student have been found
             if (teacherResponse == null || teacherResponse.getRespData() == null)
@@ -64,52 +60,25 @@ public class ClassroomService {
 
             // get classroom Dto and return response
             return ResponseEntity.ok(new GenericResponse(true,
-                    "Classroom found",
-                    200,
-                    List.of(getClassroomDto(classroom.getId(), classroom.getName(), teacherResponse.getRespData().get(0), studentResponse.getRespData()))));
-
-//            Mono.zip(teacher, studentList)
-//                    .subscribe(
-//                            result -> {
-//
-//                                if (result.getT1().getRespData() == null) { // teacher is null
-//                                    ResponseEntity.ok(result.getT1());
-//                                } else if ((result.getT2().getRespData() == null)) { // students is null
-//                                    ResponseEntity.ok(result.getT2());
-//                                } else { // return classroom dto
-//                                    ResponseEntity.ok(getClassroomDto(classroom.getName(), result.getT1().getRespData(), result.getT2().getRespData()));
-//                                }
-//                            }
-//                    );
-
+                            "Classroom found",
+                            200,
+                            List.of(getClassroomDto(classroom.getId(),
+                                    classroom.getName(),
+                                    teacherResponse.getRespData().get(0),
+                                    studentResponse.getRespData()))
+                    )
+            );
         } else {
             return ResponseEntity.ok(new GenericResponse(false, "Classroom not found", 400, null));
         }
     }
 
+
+    public ResponseEntity<GenericResponse> getFallbackClassroom(Long id) {
+        return ResponseEntity.ok(new GenericResponse(false, "heavy load, please try again later", 400, null));
+    }
+
     // region helper functions
-    private GenericResponse getTeacher(Long teacherId) {
-        String teacherUrl = teacherBaseURL + "" + teacherId;
-        return webClientBuilder.build()
-                .get()
-                .uri(teacherUrl)
-                .retrieve()
-                .bodyToMono(GenericResponse.class)
-                .block();
-    }
-
-    private GenericResponse getStudents(List<Long> list) {
-        String studentUrl = studentBaseURL + "getStudentsById";
-        return webClientBuilder.build()
-                .post()
-                .uri(studentUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(list.toString())
-                .retrieve()
-                .bodyToMono(GenericResponse.class)
-                .block();
-    }
-
     private ClassroomDto getClassroomDto(Long id, String className, Object teacher, List<?> studentList) {
 
         // get ObjectMapper and register the Jackson JavaTimeModule to read Data object
@@ -127,6 +96,21 @@ public class ClassroomService {
     }
 
     // endregion
+
+    //            Mono.zip(teacher, studentList)
+//                    .subscribe(
+//                            result -> {
+//
+//                                if (result.getT1().getRespData() == null) { // teacher is null
+//                                    ResponseEntity.ok(result.getT1());
+//                                } else if ((result.getT2().getRespData() == null)) { // students is null
+//                                    ResponseEntity.ok(result.getT2());
+//                                } else { // return classroom dto
+//                                    ResponseEntity.ok(getClassroomDto(classroom.getName(), result.getT1().getRespData(), result.getT2().getRespData()));
+//                                }
+//                            }
+//                    );
+
 
 //    private GenericResponse getClassroomData(Long teacherId, List<Long> studentList) {
 //
