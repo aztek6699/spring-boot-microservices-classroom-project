@@ -73,7 +73,6 @@ public class ClassroomService {
         }
     }
 
-
     public ResponseEntity<GenericResponse> getFallbackClassroom(Long id) {
         return ResponseEntity.ok(new GenericResponse(false, "heavy load, please try again later", 400, null));
     }
@@ -94,6 +93,23 @@ public class ClassroomService {
 
         return new ClassroomDto(id, className, mappedTeacher, mappedStudentList);
     }
+
+//    private ResponseEntity<GenericResponse> addClassroom(ClassroomDto classroomDto) {
+//        Classroom classroom = new Classroom();
+//
+//        // check if teacher is null in classroom dto
+//        if (classroomDto.getTeacher().getId() != null)
+//            classroom.setTeacher(classroomDto.getTeacher().getId());
+//        else
+//            return ResponseEntity.ok(new GenericResponse(false, "Teacher must not be null", 400, null));
+//
+//        if (!classroomDto.getStudents().isEmpty() && classroomDto.getStudents() !=  null) {
+//            for (Student i : classroomDto.getStudents()) {
+//                classroom.getStudents().add(i.getId());
+//            }
+//        } else
+//            return ResponseEntity.ok(new GenericResponse(false, "Student(s) must not be null", 400, null));
+//    }
 
     // endregion
 

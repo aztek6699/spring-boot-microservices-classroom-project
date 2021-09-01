@@ -1,10 +1,10 @@
 package com.example.classservice.service;
 
 import com.example.classservice.model.GenericResponse;
+import com.example.classservice.model.ServiceUrl;
 import com.example.classservice.model.Teacher;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -17,12 +17,15 @@ public class TeacherService {
     @Autowired
     private WebClient.Builder webClientBuilder;
 
-    @Value("${teacher.service.url}")
-    private String teacherBaseURL;
+    @Autowired
+    private ServiceUrl serviceUrl;
+
+//    @Value("${teacher.service.url}")
+//    private String teacherBaseURL;
 
     @HystrixCommand(fallbackMethod = "getTeacherFallback")
     public GenericResponse getTeacher(Long teacherId) {
-        String teacherUrl = teacherBaseURL + "" + teacherId;
+        String teacherUrl = serviceUrl.getTeacher() + "" + teacherId;
         return webClientBuilder.build()
                 .get()
                 .uri(teacherUrl)

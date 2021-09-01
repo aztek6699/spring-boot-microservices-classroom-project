@@ -20,7 +20,7 @@ public class TeacherConfig {
                     "Sheraz",
                     "Android",
                     "sheraz@mail.com",
-                    LocalDate.of(1980, Month.MARCH, 3)
+                    LocalDate.of(1990, Month.MARCH, 3)
             );
 
             repo.saveAll(
